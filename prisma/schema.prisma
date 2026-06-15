@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  name       String
+  username   String    @unique
+  email      String    @unique
+  password   String
+  avatar     String?
+  bio        String?
+  created_at DateTime  @default(now())
+  
+  links      Link[]
+  upvotes    Upvote[]
+  comments   Comment[]
+  
+  @@map("users")
+}
+
+model Link {
+  id          Int       @id @default(autoincrement())
+  title       String
+  url         String
+  description String?
+  category    String
+  created_at  DateTime  @default(now())
+  
+  user_id     Int
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  upvotes     Upvote[]
+  comments    Comment[]
+  
+  @@map("links")
+}
+
+model Upvote {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now())
+  
+  user_id    Int
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  link_id    Int
+  link       Link     @relation(fields: [link_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, link_id])
+  @@map("upvotes")
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  content    String
+  created_at DateTime @default(now())
+  
+  user_id    Int
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  link_id    Int
+  link       Link     @relation(fields: [link_id], references: [id], onDelete: Cascade)
+  
+  @@map("comments")
+}

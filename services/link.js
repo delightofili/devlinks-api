@@ -1,3 +1,5 @@
+import prisma from "../lib/prisma";
+
 // hardcoded data for now — will be replaced with database queries
 let links = [
   {
@@ -26,21 +28,45 @@ let links = [
   },
 ];
 
-export async function fetchAllLinks({ category, page } = {}) {
-  // default empty object if no arguments passed
-
-  let result = links;
-  // start with all links
+export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
+  const where = {};
+  // start with empty where clause - matches everything
 
   if (category) {
-    result = result.filter((link) => link.category === category);
-    // filter by category if provided
-    // .filter returns new array with only matching items
-  }
+    where.category = category;
+    //add category filter if provided
 
-  return result;
-  // async function always returns a Promise
-  // even if you just return a plain value — it wraps it in Promise.resolve()
+    const [links, total] = await Promise.all([
+      //promise.all runs both queries simultaneously and it's faster...
+
+      prisma.link.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, name: true, username: true, avatar: true },
+            //only get this user fields - never password
+          },
+          _count: {
+            select: { upvotes: true, comments: true },
+          },
+        },
+        orderBy: { created_at: "desc" },
+        //newest first
+
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+
+      prisma.link.count({ where }),
+    ]);
+
+    return {
+      links,
+      total,
+      page,
+      totalPages: Math.celi(total / limit),
+    };
+  }
 }
 
 export async function fetchLinkById(id) {
