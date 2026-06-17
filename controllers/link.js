@@ -47,8 +47,14 @@ export const createLink = asyncHandler(async (req, res) => {
   // req.body = the JSON the client sent
   // client sends: { "title": "MDN", "url": "https://mdn.com", ... }
   // destructure the fields we need
-
-  const newLink = await insertLink({ title, url, category, description });
+  const userId = 1;
+  const newLink = await insertLink({
+    title,
+    url,
+    category,
+    description,
+    userId,
+  });
   // pass to service — service saves to database
   // returns the newly created link with id and created_at
 

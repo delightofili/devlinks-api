@@ -1,33 +1,5 @@
 import prisma from "../lib/prisma";
 
-// hardcoded data for now — will be replaced with database queries
-let links = [
-  {
-    id: 1,
-    title: "MDN Docs",
-    url: "https://developer.mozilla.org",
-    category: "tools",
-    description: "Web docs",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    title: "CSS Tricks",
-    url: "https://css-tricks.com",
-    category: "articles",
-    description: "CSS tips",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    title: "Node.js Docs",
-    url: "https://nodejs.org",
-    category: "tutorials",
-    description: "Node docs",
-    created_at: new Date().toISOString(),
-  },
-];
-
 export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
   const where = {};
   // start with empty where clause - matches everything
@@ -35,38 +7,38 @@ export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
   if (category) {
     where.category = category;
     //add category filter if provided
-
-    const [links, total] = await Promise.all([
-      //promise.all runs both queries simultaneously and it's faster...
-
-      prisma.link.findMany({
-        where,
-        include: {
-          user: {
-            select: { id: true, name: true, username: true, avatar: true },
-            //only get this user fields - never password
-          },
-          _count: {
-            select: { upvotes: true, comments: true },
-          },
-        },
-        orderBy: { created_at: "desc" },
-        //newest first
-
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-
-      prisma.link.count({ where }),
-    ]);
-
-    return {
-      links,
-      total,
-      page,
-      totalPages: Math.celi(total / limit),
-    };
   }
+
+  const [links, total] = await Promise.all([
+    //promise.all runs both queries simultaneously and it's faster...
+
+    prisma.link.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, name: true, username: true, avatar: true },
+          //only get this user fields - never password
+        },
+        _count: {
+          select: { upvotes: true, comments: true },
+        },
+      },
+      orderBy: { created_at: "desc" },
+      //newest first
+
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+
+    prisma.link.count({ where }),
+  ]);
+
+  return {
+    links,
+    total,
+    page,
+    totalPages: Math.celi(total / limit),
+  };
 }
 
 export async function fetchLinkById(id) {
@@ -78,23 +50,31 @@ export async function fetchLinkById(id) {
   // return the link if found, null if not
 }
 
-export async function insertLink({ title, url, category, description }) {
-  const newLink = {
-    id: links.length + 1,
-    // simple id — database will handle this properly later
-    title,
-    url,
-    category,
-    description,
-    created_at: new Date().toISOString(),
-    // ISO string — "2024-01-15T10:30:00.000Z"
-  };
-
-  links.push(newLink);
-  // add to our array — database INSERT later
-
-  return newLink;
-  // return so controller can send it back to client
+export async function insertLink({
+  title,
+  url,
+  userId,
+  category,
+  description,
+}) {
+  return prisma.link.create({
+    data: {
+      title,
+      url,
+      description,
+      category,
+      user_id: userId,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+        },
+      },
+    },
+  });
 }
 
 export async function modifyLink(id, data) {
