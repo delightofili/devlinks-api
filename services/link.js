@@ -1,4 +1,4 @@
-import prisma from "../lib/prisma";
+import prisma from "../lib/prisma.js";
 
 export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
   const where = {};
@@ -37,12 +37,12 @@ export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
     links,
     total,
     page,
-    totalPages: Math.celi(total / limit),
+    totalPages: Math.ceil(total / limit),
   };
 }
 
 export async function fetchLinkById(id) {
-  const link = links.find((link) => link.id === Number(id));
+  const link = links.findIndex((link) => link.id === Number(id));
   // .find returns first matching item or undefined
   // Number(id) converts string '5' to number 5 for comparison
 
