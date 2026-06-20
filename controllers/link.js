@@ -47,7 +47,7 @@ export const createLink = asyncHandler(async (req, res) => {
   // req.body = the JSON the client sent
   // client sends: { "title": "MDN", "url": "https://mdn.com", ... }
   // destructure the fields we need
-  const userId = 1;
+  const userId = req.userId;
   const newLink = await insertLink({
     title,
     url,

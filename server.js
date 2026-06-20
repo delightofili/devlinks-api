@@ -6,6 +6,10 @@ import { logger } from "./middleware/logger.js";
 
 import linksRouter from "./routes/link.js";
 // import links router — handles all /api/links routes
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { generalLimiter } from "./middleware/rateLimiter.js";
+import { doubleCsrf } from "csrf-csrf";
 
 const app = express();
 //creates the express application.
@@ -34,6 +38,40 @@ app.use(express.json());
 
 app.use(logger);
 //logs every request without timing
+
+//for req.cookies
+
+app.use(cookieParser());
+
+//security headers made easy
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "https://res.cloudinary.com"],
+      },
+    },
+  }),
+);
+
+//applies to every routes - broad protection
+
+app.use(generalLimiter);
+
+//CSRF PROTECTION
+
+const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
+  getSecret: () => process.env.CSRF_SECRET,
+  cookieName: "csrf-token",
+  cookieOptions: {
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  },
+});
+
+app.use(doubleCsrfProtection);
 
 //---ROUTES----
 

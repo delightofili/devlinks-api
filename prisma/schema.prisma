@@ -6,12 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
 model User {
   id         Int       @id @default(autoincrement())
   name       String
   username   String    @unique
   email      String    @unique
   password   String
+  role       Role      @default(USER)
   avatar     String?
   bio        String?
   created_at DateTime  @default(now())
@@ -66,4 +73,13 @@ model Comment {
   link       Link     @relation(fields: [link_id], references: [id], onDelete: Cascade)
   
   @@map("comments")
+}
+
+model BlacklistedToken {
+  id    Int  @id @default(autoincrement())
+  token  String  @unique
+  expires_at DateTime
+  created_at DateTime  @default(now())
+
+  @@map("blacklisted_tokens")
 }

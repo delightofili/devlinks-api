@@ -6,6 +6,9 @@ import {
   updateLink,
   deleteLink,
 } from "../controllers/link.js";
+import { requireAuth } from "../middleware/auth.js";
+import { sanitizeInput } from "../middleware/sanitize.js";
+
 // import all controller functions
 
 const router = express.Router();
@@ -19,7 +22,10 @@ router.get("/:id", getLinkById);
 // GET /api/links/1 → getLinkById controller
 // :id captures whatever is in that URL position
 
-router.post("/", createLink);
+router.post("/", requireAuth, sanitizeInput, createLink);
+//requireAuth runs first
+// if it calls next() — createLink runs next, with req.userId available
+// if it sends a 401 response — createLink never runs at all
 // POST /api/links → createLink controller
 
 router.patch("/:id", updateLink);
