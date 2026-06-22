@@ -3,7 +3,13 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../lib/jwt.js";
-import { findUserByEmail } from "../services/auth.js";
+import {
+  blacklistToken,
+  checkBlacklist,
+  createUser,
+  findUserByEmail,
+  findUserByUsername,
+} from "../services/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import bcrypt from "bcryptjs";
 
@@ -51,7 +57,7 @@ export const refresh = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: "No refresh token provided" });
   }
 
-  const decoded = verifyRefreshToken(refreshToken);
+  const decoded = verifyRefreshToken(oldRefreshToken);
 
   if (!decoded) {
     return res.status(401).json({ error: "Invalid or expired refresh token" });
@@ -67,7 +73,7 @@ export const refresh = asyncHandler(async (req, res) => {
   await blacklistToken(oldRefreshToken);
 
   const newAccessToken = generateAccessToken(decoded.userId);
-  const newRefreshToken = generateRefreshToken(decode.userId);
+  const newRefreshToken = generateRefreshToken(decoded.userId);
 
   res.cookie("refreshToken", newRefreshToken, {
     httpOnly: true,
@@ -83,4 +89,44 @@ export const logout = asyncHandler(async (req, res) => {
   res.clearCookie("refreshToken");
 
   res.json({ message: "Logged out successfully" });
+});
+
+export const register = asyncHandler(async (req, res) => {
+  const { name, username, email, password } = req.body;
+  const existingEmail = await findUserByEmail(email);
+  if (existingEmail) {
+    return res.status(409).json({ error: "Email already in use" });
+  }
+  const existingUsername = await findUserByUsername(username);
+  if (existingUsername) {
+    return res.status(409).json({ error: "Username already in use" });
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newUser = await createUser({
+    name,
+    username,
+    email,
+    password: hashedPassword,
+  });
+
+  const accessToken = generateAccessToken(newUser.id);
+  const refreshToken = generateRefreshToken(newUser.id);
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return res.status(201).json({
+    accessToken,
+    user: {
+      id: newUser.id,
+      name: newUser.name,
+      username: newUser.username,
+      email: newUser.email,
+    },
+  });
 });

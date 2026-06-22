@@ -1,4 +1,4 @@
-import prisma from "../lib/prisma";
+import prisma from "../lib/prisma.js";
 
 export async function requireLinkOwnership(req, res, next) {
   const linkId = Number(req.params.id);
@@ -20,4 +20,6 @@ export async function requireLinkOwnership(req, res, next) {
   }
 
   req.link = link;
+
+  next();
 }

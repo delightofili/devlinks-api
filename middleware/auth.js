@@ -15,17 +15,17 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 
-  const user = await prisma.user.findUnique({
-    where: {id: decoded.userId},
-    select: {id:true, role:true}
-  })
+  const user = prisma.user.findUnique({
+    where: { id: decoded.userId },
+    select: { id: true, role: true },
+  });
 
-  if(!user){
-    return res.status(401).json({error: "User no longer exists"})
+  if (!user) {
+    return res.status(401).json({ error: "User no longer exists" });
   }
 
   req.userId = user.id;
-  req.userRole = user.role
+  req.userRole = user.role;
 
   next();
 }

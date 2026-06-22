@@ -5,6 +5,7 @@ import { logger } from "./middleware/logger.js";
 // import our custom logger middleware
 
 import linksRouter from "./routes/link.js";
+import authRouter from "./routes/auth.js";
 // import links router — handles all /api/links routes
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -64,11 +65,17 @@ app.use(generalLimiter);
 
 const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET,
+  getSessionIdentifier: (req) => req.cookies.refreshToken || "anonymous",
   cookieName: "csrf-token",
   cookieOptions: {
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
   },
+});
+
+app.get("/api/auth/setup-csrf", (req, res) => {
+  const token = generateCsrfToken(req, res);
+  res.json({ csrfToken: token });
 });
 
 app.use(doubleCsrfProtection);
@@ -80,6 +87,8 @@ app.get("/health", (req, res) => {
 });
 //health checks - simple route to confirm server is running
 //process.uptime is seconds i=since server started
+
+app.use("/api/auth", authRouter);
 
 app.use("/api/links", linksRouter);
 //mounts links router
