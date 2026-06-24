@@ -6,11 +6,15 @@ import { logger } from "./middleware/logger.js";
 
 import linksRouter from "./routes/link.js";
 import authRouter from "./routes/auth.js";
+import usersRouter from "./routes/users.js";
 // import links router — handles all /api/links routes
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { generalLimiter } from "./middleware/rateLimiter.js";
 import { doubleCsrf } from "csrf-csrf";
+
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 //creates the express application.
@@ -78,7 +82,14 @@ app.get("/api/auth/setup-csrf", (req, res) => {
   res.json({ csrfToken: token });
 });
 
-app.use(doubleCsrfProtection);
+//app.use(doubleCsrfProtection);
+
+//file uploads
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 //---ROUTES----
 
@@ -91,6 +102,8 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRouter);
 
 app.use("/api/links", linksRouter);
+
+app.use("/api/users", usersRouter);
 //mounts links router
 //any req to /api/links* goes to linksROuter
 

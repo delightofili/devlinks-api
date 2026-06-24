@@ -6,6 +6,8 @@ import {
   modifyLink,
   removeLink,
 } from "../services/link.js";
+import prisma from "../lib/prisma.js";
+import PDFDocument from "pdfkit";
 // import service functions — these do the actual work
 
 export const getAllLinks = asyncHandler(async (req, res) => {
@@ -96,4 +98,63 @@ export const deleteLink = asyncHandler(async (req, res) => {
 
   res.json({ message: `Link ${id} deleted successfully` });
   // 200 with confirmation message
+});
+
+export const uploadGallery = asyncHandler(async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: "No files uploaded" });
+  }
+
+  const urls = req.files.map((file) => `/uploads/${file.filename}`);
+
+  res.json({ images: urls });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const avatarFile = req.files["avatar"]?.[0];
+  const coverFile = req.files["coverPhoto"]?.[0];
+});
+
+export const exportLinks = asyncHandler(async (req, res) => {
+  const links = await prisma.link.findMany({
+    where: { user_id: req.userId },
+  });
+
+  const csvHeader = "Title,URL,Category,Created At\n";
+
+  const csvRows = links
+    .map((link) => `${link.title},${link.category},${link.created_at}`)
+    .join("\n");
+
+  const csvContent = csvHeader + csvRows;
+
+  res.setHeader("Content-Type", "text/csv");
+
+  res.setHeader("Content-Disposition", "attachment; filename=my-links.csv");
+  res.send(csvContent);
+});
+
+//pdf generation
+
+export const generateLinksReport = asyncHandler(async (req, res) => {
+  const links = await prisma.link.findMany({
+    where: { user_id: req.userId },
+  });
+
+  const doc = new PDFDocument();
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "attachment; filename=links-report.pdf");
+
+  doc.pipe(res);
+  doc.fontSize(20).text("My DevLinks Report", { align: "center" });
+  doc.moveDown();
+
+  links.forEach((link) => {
+    doc.fontSize(12).text(`${link.title} - ${link.url}
+      `);
+    doc.fontSize(10).fillColor("gray").text(link.category);
+    doc.moveDown();
+  });
+  doc.end();
 });

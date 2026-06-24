@@ -5,10 +5,14 @@ import {
   createLink,
   updateLink,
   deleteLink,
+  uploadGallery,
+  updateProfile,
+  exportLinks,
 } from "../controllers/link.js";
 import { requireAuth } from "../middleware/auth.js";
 import { sanitizeInput } from "../middleware/sanitize.js";
 import { requireLinkOwnership } from "../middleware/ownership.js";
+import { upload } from "../lib/multer.js";
 
 // import all controller functions
 
@@ -34,5 +38,24 @@ router.patch("/:id", requireAuth, requireLinkOwnership, updateLink);
 
 router.delete("/:id", requireAuth, requireLinkOwnership, deleteLink);
 // DELETE /api/links/1 → deleteLink controller
+
+//multitple file uploads
+router.post(
+  "/links/:id/gallery",
+  requireAuth,
+  upload.array("images", 5),
+  uploadGallery,
+);
+
+router.post(
+  "/profile",
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "coverPhoto", maxCount: 1 },
+  ]),
+  updateProfile,
+);
+
+router.get("/export/links", requireAuth, exportLinks);
 
 export default router;

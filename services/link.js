@@ -1,3 +1,4 @@
+import { deleteCloudinaryImage } from "../controllers/users.js";
 import prisma from "../lib/prisma.js";
 
 export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
@@ -42,7 +43,7 @@ export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
 }
 
 export async function fetchLinkById(id) {
-  const link = links.findIndex((link) => link.id === Number(id));
+  const link = await prisma.link.findIndex((link) => link.id === Number(id));
   // .find returns first matching item or undefined
   // Number(id) converts string '5' to number 5 for comparison
 
@@ -78,7 +79,7 @@ export async function insertLink({
 }
 
 export async function modifyLink(id, data) {
-  const index = links.findIndex((link) => link.id === Number(id));
+  const index = await prisma.link.findIndex((link) => link.id === Number(id));
   // findIndex returns position in array, or -1 if not found
 
   if (index === -1) return null;
@@ -92,7 +93,7 @@ export async function modifyLink(id, data) {
   // return updated link
 }
 
-export async function removeLink(id) {
+/* export async function removeLink(id) {
   const index = links.findIndex((link) => link.id === Number(id));
 
   if (index === -1) return null;
@@ -105,4 +106,23 @@ export async function removeLink(id) {
 
   return deleted;
   // return deleted item so controller can confirm
+} */
+
+//cloudinary
+
+export async function removeLink(id, userId) {
+  const link = await prisma.link.findUnique({ where: { id: Number(id) } });
+
+  if (!link) return null;
+
+  if (link.user_id !== userId) {
+    const error = new Error("You can only delete your own links");
+    error.statusCode === 403;
+    throw error;
+  }
+
+  if (link.image) {
+    await deleteCloudinaryImage(link.image);
+  }
+  return prisma.link.delete({ where: { id: Number(id) } });
 }

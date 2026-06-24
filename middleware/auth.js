@@ -1,7 +1,7 @@
 import { verifyAccessToken } from "../lib/jwt.js";
 import prisma from "../lib/prisma.js";
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer")) {
@@ -15,9 +15,9 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 
-  const user = prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: decoded.userId },
-    select: { id: true, role: true },
+    select: { id: true /* role: true */ },
   });
 
   if (!user) {
@@ -25,7 +25,7 @@ export function requireAuth(req, res, next) {
   }
 
   req.userId = user.id;
-  req.userRole = user.role;
+  //req.userRole = user.role;
 
   next();
 }

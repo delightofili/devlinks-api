@@ -1,0 +1,29 @@
+
+
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@devlinks.com",
+  "password": "Password123"
+}
+
+
+
+###Upload Avatar Request
+POST http://localhost:5000/api/users/avatar
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc4MjIxNjI1NywiZXhwIjoxNzgyMjE3MTU3fQ.h5H4u1QMtZYD-_Nkh390ZkkzhHjgJ2yR8EZYKD_JwNQ
+Content-Type: multipart/form-data; boundary=WebkitBoundaryString
+
+--WebkitBoundaryString
+Content-Disposition: form-data; name="avatar"; filename="test.png"
+Content-Type: image/png
+
+< ./test.jpg
+--WebkitBoundaryString-- 
+
+
+###export links
+
+GET http://localhost:5000/api/links/export
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc4MjIxNjI1NywiZXhwIjoxNzgyMjE3MTU3fQ.h5H4u1QMtZYD-_Nkh390ZkkzhHjgJ2yR8EZYKD_JwNQ
