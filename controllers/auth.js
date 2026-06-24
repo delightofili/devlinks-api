@@ -10,6 +10,7 @@ import {
   findUserByEmail,
   findUserByUsername,
 } from "../services/auth.js";
+import { sendWelcomeEmail } from "../services/email.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import bcrypt from "bcryptjs";
 
@@ -109,6 +110,8 @@ export const register = asyncHandler(async (req, res) => {
     email,
     password: hashedPassword,
   });
+
+  sendWelcomeEmail(newUser);
 
   const accessToken = generateAccessToken(newUser.id);
   const refreshToken = generateRefreshToken(newUser.id);
