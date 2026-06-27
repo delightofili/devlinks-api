@@ -1,9 +1,9 @@
 import "dotenv/config";
 import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import cors from "cors";
 import { logger } from "./middleware/logger.js";
-// import our custom logger middleware
-
 import linksRouter from "./routes/link.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
@@ -18,24 +18,18 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-//creates the express application.
-//app is my entire server, everything attaches to it.
+
+const httpServer = createServer(app);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: ["http://localhost:3000"],
+    credentials: true,
+  },
+});
 
 //GLOBAL MIDDLEWARE
 //these runs on every single request in this order
-
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "https://devlinks.vercel.app"],
-    //only these are meant to talk to the API, other requests are blocked
-
-    credentials: true,
-    //meaning it allows cookies to be sent with req, needed for auth.
-
-    methods: ["GET", "POST", "PATCH", "DELETE"],
-    //http methods that are allowed
-  }),
-);
 //we run cors first, bcos browser check what happens before anything else
 
 app.use(express.json());
@@ -107,6 +101,15 @@ app.use("/api/links", linksRouter);
 app.use("/api/users", usersRouter);
 app.use("/api", adminRouter);
 
+//  ---------------- SOCKET.IO -------------------
+
+io.on("connection", (socket) => {
+  console.log(`User Connected: ${socket.id}`);
+  socket.on("disconnect", () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
+});
+
 //--- 404 HANDLER ---
 //ONLY WHERE there's no routes
 
@@ -131,10 +134,18 @@ app.use((err, req, res, next) => {
   });
 });
 
+///Start Server
+
 const PORT = process.env.PORT || 5000;
 //user PORT from env fileor set it to 5000.
 
-app.listen(PORT, () => {
+/* app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   //runs once server succesfully starts sha...
+}); */
+
+httpServer.listen(PORT, () => {
+  console.log(`Server running on Port: ${PORT}`);
 });
+
+export { io };
