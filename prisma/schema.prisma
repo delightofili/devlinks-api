@@ -10,6 +10,7 @@ enum Role {
   USER
   MODERATOR
   ADMIN
+  
 }
 
 model User {
@@ -31,6 +32,9 @@ model User {
   links      Link[]
   upvotes    Upvote[]
   comments   Comment[]
+
+  received_notifications Notification[] @relation("NotificationReceiver")
+  triggered_actions      Notification[] @relation("NotificationActor")
   
   @@map("users")
 }
@@ -48,7 +52,8 @@ model Link {
   
   upvotes     Upvote[]
   comments    Comment[]
-  
+  notifications  Notification[]
+
   @@map("links")
 }
 
@@ -79,6 +84,25 @@ model Comment {
   
   @@map("comments")
 }
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type String
+  is_read  Boolean   @default(false)
+  created_at  DateTime  @default(now())
+
+  user_id    Int
+  user    User   @relation("NotificationReceiver",  fields: [user_id], references: [id], onDelete: Cascade)
+
+ actor_id    Int
+ actor  User @relation("NotificationActor", fields: [actor_id], references: [id], onDelete: Cascade)
+
+ link_id Int
+ link   Link    @relation(fields: [link_id], references: [id], onDelete: Cascade)
+ 
+  @@map("notifications")
+}
+
 
 model BlacklistedToken {
   id    Int  @id @default(autoincrement())

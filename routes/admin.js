@@ -1,7 +1,8 @@
 import express from "express";
-import { requireAuth } from "../middleware/auth";
-import { requireRole } from "../middleware/roles";
-import { deleteUser } from "../controllers/users";
+import { requireAuth } from "../middleware/auth.js";
+import { requireRole } from "../middleware/roles.js";
+import { deleteUser } from "../controllers/users.js";
+import { createAdminAccount } from "../controllers/auth.js";
 
 const router = express.Router();
 
@@ -12,3 +13,12 @@ router.patch(
   requireAuth,
   requireRole("ADMIN", "MODERATOR"),
 );
+
+router.post(
+  "/admin/create-user",
+  requireAuth,
+  requireRole("ADMIN"),
+  createAdminAccount,
+);
+
+export default router;

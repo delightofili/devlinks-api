@@ -1,29 +1,134 @@
+### Variables — change these as you test
+@baseUrl = http://localhost:5000
+@accessToken = paste_your_access_token_here_after_login
 
+### =====================
+### AUTH
+### =====================
 
-POST http://localhost:5000/api/auth/login
+### Register
+POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "email": "test@devlinks.com",
-  "password": "Password123"
+  "name": "Delightsome",
+  "username": "nonny",
+  "email": "delightofili0@gmail.com",
+  "password": "password123"
 }
 
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
 
+{
+  "email": "nonso@gmail.com",
+  "password": "password123"
+}
 
-###Upload Avatar Request
-POST http://localhost:5000/api/users/avatar
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc4MjIxNjI1NywiZXhwIjoxNzgyMjE3MTU3fQ.h5H4u1QMtZYD-_Nkh390ZkkzhHjgJ2yR8EZYKD_JwNQ
-Content-Type: multipart/form-data; boundary=WebkitBoundaryString
+### Refresh token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
 
---WebkitBoundaryString
-Content-Disposition: form-data; name="avatar"; filename="test.png"
-Content-Type: image/png
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+### Forgot password
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "nonso@gmail.com"
+}
+
+### Reset password
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "paste_token_from_email_here",
+  "password": "newpassword123"
+}
+
+### Verify email
+GET {{baseUrl}}/api/auth/verify-email?token=paste_token_here
+
+### =====================
+### LINKS
+### =====================
+
+### Get all links
+GET {{baseUrl}}/api/links
+
+### Get all links with filter
+GET {{baseUrl}}/api/links?category=tools&page=1
+
+### Get single link
+GET {{baseUrl}}/api/links/1
+
+### Create a link (requires auth)
+POST {{baseUrl}}/api/links
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "title": "MDN Web Docs",
+  "url": "https://developer.mozilla.org",
+  "category": "tools",
+  "description": "The best web documentation"
+}
+
+### Update a link (requires auth + ownership)
+PATCH {{baseUrl}}/api/links/1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "title": "MDN Web Docs Updated"
+}
+
+### Delete a link (requires auth + ownership)
+DELETE {{baseUrl}}/api/links/1
+Authorization: Bearer {{accessToken}}
+
+### Upvote a link (requires auth)
+POST {{baseUrl}}/api/links/1/upvote
+Authorization: Bearer {{accessToken}}
+
+### Export links as CSV
+GET {{baseUrl}}/api/links/export
+Authorization: Bearer {{accessToken}}
+
+### =====================
+### USERS
+### =====================
+
+### Upload avatar (requires auth)
+### For file uploads REST Client uses a different syntax
+POST {{baseUrl}}/api/users/avatar
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="avatar"; filename="photo.jpg"
+Content-Type: image/jpeg
 
 < ./test.jpg
---WebkitBoundaryString-- 
+------boundary--
 
+### =====================
+### NOTIFICATIONS
+### =====================
 
-###export links
+### Get all notifications
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{accessToken}}
 
-GET http://localhost:5000/api/links/export
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc4MjIxNjI1NywiZXhwIjoxNzgyMjE3MTU3fQ.h5H4u1QMtZYD-_Nkh390ZkkzhHjgJ2yR8EZYKD_JwNQ
+### Get unread count
+GET {{baseUrl}}/api/notifications/count
+Authorization: Bearer {{accessToken}}
+
+### Mark all as read
+PATCH {{baseUrl}}/api/notifications/read
+Authorization: Bearer {{accessToken}}

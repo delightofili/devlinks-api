@@ -17,7 +17,7 @@ export async function requireAuth(req, res, next) {
 
   const user = await prisma.user.findUnique({
     where: { id: decoded.userId },
-    select: { id: true /* role: true */ },
+    select: { id: true, role: true },
   });
 
   if (!user) {
@@ -25,7 +25,7 @@ export async function requireAuth(req, res, next) {
   }
 
   req.userId = user.id;
-  //req.userRole = user.role;
+  req.userRole = user.role;
 
   next();
 }

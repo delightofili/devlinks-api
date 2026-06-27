@@ -1,5 +1,5 @@
-import resend from "../lib/email";
-import { welcomeTemplate } from "../lib/emailTemplates";
+import resend from "../lib/email.js";
+import { welcomeTemplate } from "../lib/emailTemplates.js";
 
 async function sendEmail({ to, subject, html }) {
   const { data, error } = await resend.emails.send({

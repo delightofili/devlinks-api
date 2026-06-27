@@ -15,6 +15,9 @@ import {
 import { sendWelcomeEmail } from "../services/email.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import bcrypt from "bcryptjs";
+import pkg from "@prisma/client";
+
+const { Role } = pkg;
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -262,4 +265,38 @@ export const resetPassword = asyncHandler(async (req, res) => {
   });
 
   res.json({ message: "Password reset successfully. You can now log in." });
+});
+
+export const createAdminAccount = asyncHandler(async (req, res) => {
+  try {
+    const { name, username, email, password, role } = req.body;
+
+    if (!name || !username || !email || !password) {
+      return res.status(404).json({ error: "All fields are required!" });
+    }
+
+    const accountRole = role ? role.toUpperCase() : Role.ADMIN;
+
+    if (!Object.values(Role).includes(accountRole)) {
+      return res.status(400).json({
+        error: `Invalid role. Must be one of: ${Object.values(Role).join(" , ")}`,
+      });
+    }
+
+    const hashedPassword = bcrypt.hash(password, 10);
+
+    const newAdmin = await prisma.user.create({
+      data: {
+        name,
+        username: username.toLowerCase(),
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        role: accountRole,
+        verified: true,
+      },
+    });
+    return res.status(201).json({ user: newAdmin });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });

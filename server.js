@@ -7,6 +7,7 @@ import { logger } from "./middleware/logger.js";
 import linksRouter from "./routes/link.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
+import adminRouter from "./routes/admin.js";
 // import links router — handles all /api/links routes
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -104,8 +105,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/links", linksRouter);
 
 app.use("/api/users", usersRouter);
-//mounts links router
-//any req to /api/links* goes to linksROuter
+app.use("/api", adminRouter);
 
 //--- 404 HANDLER ---
 //ONLY WHERE there's no routes
