@@ -8,7 +8,6 @@ import linksRouter from "./routes/link.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import adminRouter from "./routes/admin.js";
-// import links router — handles all /api/links routes
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { generalLimiter } from "./middleware/rateLimiter.js";
@@ -102,13 +101,64 @@ app.use("/api/users", usersRouter);
 app.use("/api", adminRouter);
 
 //  ---------------- SOCKET.IO -------------------
+io.use(socketAuth);
+const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log(`User Connected: ${socket.id}`);
+  const userId = socket.userId;
+  console.log(`User Connected: ${socket.id}, userId: ${socket.userId}`);
+
+  if (!onlineUsers.has(userId)) {
+    onlineUsers.set(userId, new Set());
+  }
+
+  onlineUsers.get(userId).add(socket.id);
+
+  //to showing is typing
+
+  socket.on("typing", ({ linkId, isTyping }) => {
+    socket.to(`link-${linkId}`).emit("userTyping", {
+      userId: socket.userId,
+      isTyping,
+    });
+  });
+
+  socket.on("joinLink", (linkId) => {
+    const room = `link-${linkId}`;
+
+    socket.join(room);
+
+    console.log(`User ${socket.userId} joined room ${room}`);
+
+    const viewerCount = io.sockets.adapter.rooms.get(room)?.size || 0;
+
+    io.to(room).emit("viewerCount", { linkId, count: viewerCount });
+  });
+
+  socket.on("leaveLink", (linkId) => {
+    const room = `link-${linkId}`;
+
+    socket.leave(room);
+
+    console.log(`User ${socket.userId} left room link-${linkId}`);
+  });
+
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
+    const userSockets = onlineUsers.get(userId);
+    if (userSockets) {
+      userSockets.delete(socket.id);
+
+      if (userSockets.size === 0) {
+        onlineUsers.delete(userId);
+      }
+    }
+    console.log(`User ${socket.userId} disconnected`);
   });
 });
+// utility function to check if a user is online — use this anywhere
+export function isUserOnline(userId) {
+  return onlineUsers.has(userId);
+}
 
 //--- 404 HANDLER ---
 //ONLY WHERE there's no routes
