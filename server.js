@@ -107,6 +107,7 @@ const onlineUsers = new Map();
 io.on("connection", (socket) => {
   const userId = socket.userId;
   console.log(`User Connected: ${socket.id}, userId: ${socket.userId}`);
+  socket.join(`user-${socket.userId}`);
 
   if (!onlineUsers.has(userId)) {
     onlineUsers.set(userId, new Set());

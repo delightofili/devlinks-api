@@ -1,5 +1,6 @@
 import { deleteCloudinaryImage } from "../controllers/users.js";
 import prisma from "../lib/prisma.js";
+import { io } from "../server.js";
 import { createNotification } from "./notifications.js";
 
 export async function fetchAllLinks({ category, page = 1, limit = 10 } = {}) {
@@ -150,6 +151,43 @@ export async function toggleUpvote(userId, linkId) {
     return { upvoted: true };
   } catch (error) {
     if (error.code === "P2002") {
+      await prisma.upvote.delete({
+        where: {
+          user_id_link_id: { user_id: userId, link_id: Number(linkId) },
+        },
+      });
+      return { upvoted: false };
+    }
+    throw error;
+  }
+}
+
+export async function toggleUpvote(userId, linkId) {
+  try {
+    await prisma.upvote.create({
+      data: { user_id: userId, link_id: Number(linkId) },
+    });
+    const link = await prisma.link.findUnique({
+      where: { id: Number(linkId) },
+      include: { user: { select: { id: true, name: true } } },
+    });
+    if (link && link.user_id !== userId) {
+      const notification = await prisma.notification.create({
+        data: {
+          user_id: link.user_id,
+          actor_id: userId,
+          type: "upvote",
+          link_id: Number(linkId),
+        },
+        include: {
+          actor: { select: { name: true, username: true } },
+        },
+      });
+      io.to(`user-${link.user_id}`).emit("notification", notification);
+    }
+    return { upvoted: true };
+  } catch (error) {
+    if (error.code === "p2002") {
       await prisma.upvote.delete({
         where: {
           user_id_link_id: { user_id: userId, link_id: Number(linkId) },
